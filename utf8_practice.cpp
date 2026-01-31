@@ -1,54 +1,53 @@
 #include <iostream>
-#include <sstream>
 #include <string>
+#include <string.h>
 
 using namespace std;
 
+
+void output(const char* str, int len){
+  char outstr[len + 1];
+  memset(&outstr[0], 0, len + 1);
+  memcpy(&outstr[0], str, len);
+
+  cout << outstr << endl;
+}
+
+
 int main(void){
   string instr;  // 入力文字列
-  stringstream outstr;  //出力文字列
 
   cin >> instr;
 
   const char* strptr = instr.c_str();  // 入力文字列のポインタ(char)
-  int strsize = instr.size() - 1;  // 入力文字列のサイズ
-  int ptrpos = 0;  // ポインタの現在位置
+  int strsize = instr.size();
 
-  while(ptrpos <= strsize){
-    // 上位1bit目が0なら1byteの文字
-    if((strptr[0] & 128) == 0){
-      outstr << instr.substr((ptrpos), 1);
-      ptrpos++;
+  while((strptr[0] != '\0') && (strsize > 0)){
+    int bytesize = 0;
+    // 上位0bitが0なら1byte文字
+    if(!(strptr[0] & 128)){
+      bytesize = 1;
     }
 
-    // 上位1bit目が1の場合はbyte数を計算する
     else{
-      int bytesize = 1;  // 文字のサイズ
-      bool errorflag = true;
-
-      // 上位2bit目から0がある位置を探す
-      for(int i = 64; i > 0; i = i >> 1){
+      // 上位から連続している1の数を数える (これが文字のbyte数になる)
+      // ※上位1bitは分岐で1が確定しているので確認する必要はないのですが、「これは仕組みを知るためのお勉強用コードである」＆「意味合い的には必要」と考えたので、あえてそこも含めて確認しています。
+      while(strptr[0] & (128 >> bytesize)){
         bytesize++;
 
-        // 検索箇所が0ならエラーフラグを偽にしてループを抜ける
-        if((strptr[0] & i) == 0){
-          errorflag = false;
-          break;
+        // 念の為
+        if(bytesize > 4){
+          cout << "Error!!" << endl;
+          return 0;
         }
       }
-
-      if(errorflag){
-        cout << "Error!!" << endl;
-        return 0;
-      }
-
-      outstr << instr.substr((ptrpos), bytesize);
-      strptr++;
-      ptrpos += bytesize;
     }
+
+    output(strptr, bytesize);
+    strptr += bytesize;
+    strsize--;
   }
 
-  cout << outstr.str() << endl;
 
   return 0;
 }
